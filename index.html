@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div class="container mx-auto text-center py-10">
+        <h1 class="text-3xl font-bold text-blue-600 mb-5">Blockchain Demo</h1>
+        <div class="flex justify-center gap-4 mb-5">
+            <button onclick="addBlock()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Add Block</button>
+            <button onclick="resetBlockchain()" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Reset Blockchain</button>
+        </div>
+        <div id="blockchain" class="flex flex-wrap justify-center gap-4"></div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 class="text-xl font-bold text-blue-600 mb-3 text-center">Block Details</h2>
+            <div class="space-y-2">
+                <div class="flex justify-between border-b pb-1"><strong>Index:</strong> <span id="modalIndex"></span></div>
+                <div class="flex justify-between border-b pb-1"><strong>Timestamp:</strong> <span id="modalTimestamp"></span></div>
+                <div class="flex justify-between border-b pb-1"><strong>Data:</strong> <span id="modalData"></span></div>
+                <div class="border-b pb-1"><strong>Previous Hash:</strong> <p id="modalPrevHash" class="break-all"></p></div>
+                <div class="border-b pb-1"><strong>Hash:</strong> <p id="modalHash" class="break-all"></p></div>
+            </div>
+            <button onclick="closeModal()" class="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full">Close</button>
+        </div>
+    </div>
+
+    <script>
+        class Block {
+            constructor(index, previousHash, data) {
+                this.index = index;
+                this.timestamp = new Date().toLocaleString();
+                this.data = data;
+                this.previousHash = previousHash;
+                this.hash = this.calculateHash();
+            }
+            calculateHash() {
+                return btoa(this.index + this.timestamp + this.previousHash + JSON.stringify(this.data));
+            }
+        }
+
+        class Blockchain {
+            constructor() {
+                this.chain = [this.createGenesisBlock()];
+            }
+
+            createGenesisBlock() {
+                return new Block(0, "0", "Genesis Block");
+            }
+
+            getLatestBlock() {
+                return this.chain[this.chain.length - 1];
+            }
+
+            addBlock(newData) {
+                const newIndex = this.chain.length;
+                const prevBlock = this.getLatestBlock();
+                const newBlock = new Block(newIndex, prevBlock.hash, newData);
+                this.chain.push(newBlock);
+                return newBlock;
+            }
+        }
+
+        let myBlockchain = new Blockchain();
+
+        function addBlock() {
+            const data = prompt("Enter data for the new block:");
+            if (data) {
+                myBlockchain.addBlock(data);
+                displayBlockchain();
+            }
+        }
+
+        function resetBlockchain() {
+            myBlockchain = new Blockchain();
+            displayBlockchain();
+        }
+
+        function displayBlockchain() {
+            const container = document.getElementById("blockchain");
+            container.innerHTML = "";
+            myBlockchain.chain.forEach((block, index) => {
+                const blockDiv = document.createElement("div");
+                blockDiv.classList.add("bg-white", "p-4", "rounded-lg", "shadow-md", "w-80", "cursor-pointer", "transition", "transform", "hover:scale-105");
+                blockDiv.innerHTML = `
+                    <p class="text-blue-600 font-bold">Index: ${block.index}</p>
+                    <p><strong>Timestamp:</strong> ${block.timestamp}</p>
+                    <p><strong>Data:</strong> ${block.data}</p>
+                    <p class="text-sm text-gray-500 truncate"><strong>Previous Hash:</strong> ${block.previousHash}</p>
+                    <p class="text-sm text-gray-500 truncate"><strong>Hash:</strong> ${block.hash}</p>
+                `;
+                blockDiv.onclick = () => showDetails(block);
+                container.appendChild(blockDiv);
+            });
+        }
+
+        function showDetails(block) {
+            document.getElementById("modalIndex").textContent = block.index;
+            document.getElementById("modalTimestamp").textContent = block.timestamp;
+            document.getElementById("modalData").textContent = block.data;
+            document.getElementById("modalPrevHash").textContent = block.previousHash;
+            document.getElementById("modalHash").textContent = block.hash;
+            document.getElementById("modal").classList.remove("hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("modal").classList.add("hidden");
+        }
+
+        displayBlockchain();
+    </script>
+</body>
+</html>
